@@ -66,7 +66,7 @@
 
   async function apiGet(endpoint, params) {
     const url = new URL(`${API_BASE}/${endpoint}`);
-    params.key = state.apiKey;
+    if (!params.key) params.key = state.apiKey;
     Object.entries(params).forEach(([k, v]) => {
       if (v !== null && v !== undefined && v !== '') {
         url.searchParams.set(k, v);

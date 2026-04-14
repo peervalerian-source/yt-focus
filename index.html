@@ -11,6 +11,7 @@
   <link rel="manifest" href="manifest.json">
   <title>YT Focus</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <div id="app">
@@ -19,18 +20,49 @@
       <div class="setup-container">
         <div class="setup-logo">YT Focus</div>
         <p class="setup-subtitle">YouTube ohne Shorts</p>
-        <div class="setup-instructions">
-          <p>Du brauchst einen kostenlosen YouTube API Key:</p>
-          <ol>
-            <li>Gehe zu <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console</a></li>
-            <li>Erstelle ein Projekt</li>
-            <li>Aktiviere die "YouTube Data API v3"</li>
-            <li>Erstelle einen API Key unter "Anmeldedaten"</li>
-          </ol>
+
+        <!-- Google Sign-In -->
+        <button id="google-signin-btn" class="btn-google">
+          <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          Mit Google anmelden
+        </button>
+
+        <div class="setup-divider">
+          <span>oder</span>
         </div>
-        <input type="text" id="api-key-input" placeholder="API Key hier eingeben..." autocomplete="off">
-        <button id="save-key-btn" class="btn-primary">Starten</button>
+
+        <!-- API Key Fallback -->
+        <details id="api-key-section">
+          <summary>Mit API Key anmelden</summary>
+          <div class="setup-instructions">
+            <p>Du brauchst einen kostenlosen YouTube API Key:</p>
+            <ol>
+              <li>Gehe zu <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console</a></li>
+              <li>Erstelle ein Projekt</li>
+              <li>Aktiviere die "YouTube Data API v3"</li>
+              <li>Erstelle einen API Key unter "Anmeldedaten"</li>
+            </ol>
+          </div>
+          <input type="text" id="api-key-input" placeholder="API Key hier eingeben..." autocomplete="off">
+          <button id="save-key-btn" class="btn-primary">Starten</button>
+        </details>
+
         <p id="setup-error" class="error-text"></p>
+
+        <!-- OAuth Client ID Setup (hidden, shown when needed) -->
+        <div id="client-id-setup" class="hidden">
+          <div class="setup-instructions">
+            <p>Einmalig: Gib deine Google OAuth Client ID ein:</p>
+            <ol>
+              <li>Gehe zu <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console</a></li>
+              <li>Erstelle eine "OAuth 2.0-Client-ID" (Web-Anwendung)</li>
+              <li>Autorisierter Redirect-URI: <code id="redirect-uri"></code></li>
+              <li>Autorisierter JS-Ursprung: <code id="js-origin"></code></li>
+            </ol>
+          </div>
+          <input type="text" id="client-id-input" placeholder="Client ID hier eingeben..." autocomplete="off">
+          <button id="save-client-id-btn" class="btn-primary">Speichern & Anmelden</button>
+        </div>
       </div>
     </div>
 
@@ -48,6 +80,7 @@
           <button id="settings-btn" class="icon-btn" aria-label="Einstellungen">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.611 3.611 0 0112 15.6z"/></svg>
           </button>
+          <div id="profile-btn" class="profile-avatar hidden"></div>
         </div>
       </header>
 
@@ -66,6 +99,7 @@
 
       <!-- Category Chips -->
       <div id="category-chips">
+        <button class="chip" data-category="subscriptions">Abos</button>
         <button class="chip active" data-category="trending">Trends</button>
         <button class="chip" data-category="music">Musik</button>
         <button class="chip" data-category="gaming">Gaming</button>
@@ -146,16 +180,17 @@
               </select>
             </div>
             <div class="setting-item">
-              <label>API Key</label>
-              <button id="change-key-btn" class="btn-secondary btn-small">Ändern</button>
-            </div>
-            <div class="setting-item">
               <label>Ergebnisse pro Seite</label>
               <select id="results-per-page">
                 <option value="15">15</option>
                 <option value="25" selected>25</option>
                 <option value="50">50</option>
               </select>
+            </div>
+            <div id="setting-account" class="setting-item">
+              <label id="account-label">Konto</label>
+              <button id="logout-btn" class="btn-secondary btn-small hidden">Abmelden</button>
+              <button id="change-key-btn" class="btn-secondary btn-small">Key ändern</button>
             </div>
           </div>
         </div>

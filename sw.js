@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yt-focus-v1';
+const CACHE_NAME = 'yt-focus-v2';
 const ASSETS = ['/', '/index.html', '/style.css', '/app.js', '/manifest.json'];
 
 self.addEventListener('install', (e) => {
